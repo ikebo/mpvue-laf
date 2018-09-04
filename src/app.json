@@ -1,0 +1,44 @@
+{
+  "pages": [
+    "pages/index/main",
+    "pages/logs/main",
+    "pages/counter/main",
+    "pages/profile/main",
+    "pages/post/main",
+    "pages/itemDetail/main",
+    "pages/changeContact/main",
+    "pages/itemsControl/main",
+    "pages/editItem/main"
+  ],
+  "window": {
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#2489cd",
+    "navigationBarTitleText": "武院失物招领",
+    "navigationBarTextStyle": "white"
+  },
+  "tabBar": {
+    "list": [
+      {
+        "pagePath": "pages/index/main",
+        "text": "物品",
+        "iconPath": "./static/imgs/items_default.png",
+        "selectedIconPath": "./static/imgs/items_selected.png"
+      },
+      {
+        "pagePath": "pages/post/main",
+        "text": "发布",
+        "iconPath": "./static/imgs/post_default.png",
+        "selectedIconPath": "./static/imgs/post_selected.png"
+      },
+      {
+        "pagePath": "pages/profile/main",
+        "text": "我的",
+        "iconPath": "./static/imgs/profile_default.png",
+        "selectedIconPath": "./static/imgs/profile_selected.png"
+      }
+    ],
+    "color": "black",
+    "selectedColor": "#2489cd",
+    "position": "bottom"
+  }
+}
