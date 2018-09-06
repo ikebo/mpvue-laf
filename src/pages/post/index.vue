@@ -51,8 +51,9 @@ export default {
         user_id: null
     },
 
-    created (options) {
+    beforeMount (options) {
         this.user_id = wx.getStorageSync('userData').id || ''
+
         if (this.user_id) {
             console.log('use_id', this.user_id)
         }
@@ -163,37 +164,8 @@ export default {
         radioChange (e) {
             console.log('e', e);
             this.itemType = e.mp.detail.value
-        },
-        getNowDate () {
-            let newDate = new Date();
-            let year = newDate.getFullYear();
-            let month = String(newDate.getMonth() + 1).length === 1 ? '0' + (newDate.getMonth() + 1) : (newDate.getMonth() + 1);
-            let day = String(newDate.getDate()).length === 1 ? '0' + newDate.getDate() : newDate.getDate();
-
-            let nowDate = year + '-' + month + '-' + day;
-
-            return nowDate;
-        },
-
-        getPreDate () {
-            let nowDate = this.getNowDate();
-            let dateArr = nowDate.split('-');
-            let nowMonth = Number(dateArr[1]);
-            let preYear = Number(dateArr[0]); //number
-            let preMonth = nowMonth-1;  // number
-            let preDay = dateArr[2]; //string
-            if(nowMonth === 1) {
-                preYear = preYear - 1;
-                preMonth = 12;
-            }
-
-            preMonth = String(preMonth).length === 1 ? '0' + String(preMonth) : String(preMonth);
-
-            preYear = String(preYear);
-
-            let preDate = preYear + '-' + preMonth + '-' + preDay;
-            return preDate;
         }
+
     }
 
 }

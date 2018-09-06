@@ -128,7 +128,7 @@ export default {
         }
     },
 
-    created (options) {
+    beforeMount (options) {
         // 获得全局数据：用户id
         const userData = wx.getStorageSync('userData')
         if (userData) {
