@@ -1,5 +1,12 @@
 import Config from './config'
 
+export function checkTel(tel){
+    if(!(/^1[34578]\d{9}$/.test(tel))){
+        return false;
+    }
+    return true
+}
+
 export function hasInfoAuth() {
     return new Promise((resolve, reject) => {
         wx.getSetting({

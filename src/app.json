@@ -30,7 +30,7 @@
       {
         "pagePath": "pages/profile/main",
         "text": "我的",
-        "iconPath": "./static/imgs/square-blue.png",
+        "iconPath": "./static/imgs/me_0.png",
         "selectedIconPath": "./static/imgs/me_1.png"
       }
     ],

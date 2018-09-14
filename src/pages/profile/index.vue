@@ -2,9 +2,15 @@
 <div id='container' :style="{height: height + 'px'}">
 
     <div id='userInfo'>
-        <div v-show='userInfo' id='userInfo-left'>
+        <div v-show='userInfo' class='userInfo-left'>
             <img :src='userInfo && userInfo.avatarUrl' />
             <p v-show='userInfo'>{{userInfo && userInfo.nickName}}</p>
+        </div>
+
+        <div v-if='canUseInfo===false' class="userInfo-left">
+            <button size='mini' id='authBtn' v-if="canUseInfo === false" open-type="getUserInfo" type='primary' :plain='true' @getuserinfo="onGotUserInfo" class="iconfont">
+                <p>&#xe97b;</p>
+            </button>
         </div>
 
         <div id='userInfo-right'>
@@ -28,7 +34,7 @@
             </p>
         </div>
     </div>
-    <button v-if="canUseInfo === false" open-type="getUserInfo" type='primary' @getuserinfo="onGotUserInfo">授权个人信息</button>
+
 
 </div>
 </template>
@@ -78,7 +84,8 @@ export default {
             let infoOrFalse = await hasInfoAuth()
             console.log('infoOrfalse', infoOrFalse)
             this.userInfo = infoOrFalse ? infoOrFalse : this.userInfo
-            this.canUseInfo = Boolean(infoOrFalse) ? this.update_avatar() : ''
+            this.canUseInfo = Boolean(infoOrFalse) ? this.update_avatar() : false
+            console.log('this.canUseInfo', this.canUseInfo)
         },
 
     },
@@ -158,14 +165,14 @@ export default {
   position: relative;
 }
 
-#userInfo-left {
+.userInfo-left {
     font-size: .9em;
     display: flex;
     flex-flow: row nowrap;
     align-items: center;
 }
 
-#userInfo-left img {
+.userInfo-left img {
     width: 110rpx;
     height: 110rpx;
     border-radius: 50%;
@@ -178,6 +185,19 @@ export default {
     justify-content: flex-end;
     padding-right: 20rpx;
     align-items: center;
+}
+
+#authBtn {
+    font-size: 55rpx;
+    width: 110rpx;
+    height: 110rpx;
+    padding: 0 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    color: #999;
+    border-color: #999;
 }
 
 </style>
