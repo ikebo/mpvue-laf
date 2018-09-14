@@ -1,5 +1,5 @@
 <template lang="html">
-<div class="item">
+<div class="item" v-if='hasDel === false'>
     <div class="header">
         <img :src="user.avatarUrl" />
         <p class="header-middle">
@@ -7,18 +7,19 @@
             <span class="time">{{month}}月{{day}}日</span>
         </p>
         <div class="header-right">
-            <button @click='bindContact' type="warn" size='mini' :plain='true'>联系Ta</button>
+            <button v-if='!isControl' @click='bindContact' type="warn" size='mini' :plain='true'>联系Ta</button>
+            <button v-else @click='onDelete' :data-id='item.id' type='warn' size='mini' :plain='true'>删除</button>
         </div>
     </div>
 
     <div class="middle">
         <p>
-            <span class="title" v-if="item.itemType === 1">#失物招领#&nbsp;</span>
+            <span class="title" v-if="item.type === 1">#失物招领#&nbsp;</span>
             <span class="title" v-else>#寻物启事#&nbsp;</span>
             <span class="des">{{item.des}}</span>
         </p>
         <div class="display">
-            <img :src="item.img" />
+            <img :src="src" v-for='(src, index) of srcs' :key='index'  />
         </div>
     </div>
 </div>
@@ -26,21 +27,25 @@
 </template>
 
 <script>
+import {getSrcs,delConfirm,del} from '@/utils/util'
+
 export default {
-    props: ['item'],
+    props: ['item', 'isControl'],
     data () {
         return {
-            user: this.item.user
+            user: this.item.user,
+            srcs: getSrcs(this.item.srcs),
+            hasDel: false
         }
     },
     computed: {
         month () {
-            let arr = this.item.date.split('-')
-            return Number(arr[1])
+            let arr = this.item.time.split('-')
+            return Number(arr[0])
         },
         day() {
-            let arr = this.item.date.split('-')
-            return Number(arr[2])
+            let arr = this.item.time.split('-')
+            return Number(arr[1])
         }
     },
     methods: {
@@ -48,6 +53,15 @@ export default {
             wx.makePhoneCall({
               phoneNumber: this.user.phoneNumber
             });
+        },
+
+        async onDelete (e) {
+            console.log(e.mp.target)
+            let item_id = e.mp.target.dataset.id
+            let res = await delConfirm() ? await del(`/api/v1/item/${item_id}`) : ''
+            console.log('res', res)
+            res ? this.hasDel = true : ''
+            console.log('hasDel', this.hasDel)
         }
     }
 }
@@ -81,6 +95,7 @@ export default {
     height: 200rpx;
     border-radius: .05rem;
     margin-top: .2rem;
+    margin-right: 2rpx;
 }
 
 .header {
@@ -125,55 +140,3 @@ export default {
 }
 
 </style>
-
-/* .item {
-  display: flex;
-  flex-flow: row nowrap;
-  height: 200rpx;
-  margin-bottom: 20rpx;
-}
-
-.item-left {
-  width: 200rpx;
-  box-sizing: border-box;
-}
-
-.item-left img {
-  width: 100%;
-  height: 100%;
-  border-radius: 5rpx;
-}
-
-.item-right {
-  display: flex;
-  flex-flow: column nowrap;
-  width: 550rpx;
-  box-sizing: border-box;
-  justify-content: space-between;
-  margin-left: 20rpx;
-  position: relative;
-}
-
-.item-right p {
-  font-size: 0.8em;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow:ellipsis;
-}
-
-.item-right button {
-  position: absolute;
-  top: 0rpx;
-  right: 25rpx;
-} */
-<!-- <div class="item-left">
-    <img :src="item.img" />
-</div>
-<div class="item-right">
-    <p v-if="item.itemType === 1">类型：招领</p>
-    <p v-else>类型：失物</p>
-    <p>时间：{{item.date}}</p>
-    <p>地点：{{item.place}}</p>
-    <p>描述: {{item.des}}</p>
-    <button :data-itemid='item.id' @tap='onLookClick' type='primary' size='mini' :plain='true'>查看</button>
-</div> -->

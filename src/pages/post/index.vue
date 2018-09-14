@@ -1,175 +1,324 @@
 <template lang="html">
 <div id="container">
-    <form @submit='formSubmit'>
+    <div class="get-type" v-if="got_type === false">
+        <div class="lost">
+            <button @tap='onLostClick' type="warn" size='mini' :plain='true'>寻物启事</button>
+        </div>
+        <div class="found">
+            <button @tap='onFoundClick' type="primary" size='mini' :plain='true'>失物招领</button>
+        </div>
+    </div>
 
-        <radio-group @change="radioChange">
-            <label><radio value='0' checked='checked' />失物</label>
-            <label><radio value='1' />招领</label>
-        </radio-group>
-
-        <label for='itemName' id='itemNameLabel'>
-            名称：
-            <input id='itemName' name='itemName' placeholder='输入物品名称'/>
-        </label>
-
-        <picker mode="date" @change='bindDateChange' :value="date" :start="preDate" :end="endDate">
-            <p v-if="itemType == 0"> 丢失时间：{{date}} </p>
-            <p v-else> 捡到时间：{{date}} </p>
-        </picker>
-
-        <label for='placeInput' id='placeLabel'>
-          <p>地点：</p>
-          <input id='placeInput' name='place' placeholder='输入地点' />
-        </label>
-
-        <button @tap='uploadImg' type='primary' :plain='true' size='mini'>上传图片</button>
-        <img v-if="imgTempPath" :src='imgTempPath' />
-
+    <div class="form" v-else>
         <div id="des">
-            描述：
-            <textarea placeholder='输入描述信息' name='des' ></textarea>
+            <textarea placeholder='请输入要发布发内容'  v-model='des'></textarea>
         </div>
 
-        <button formType="submit" type='primary' size='mini'>提交</button>
+        <div class="union">
+            <div class="imgs" v-if='imgs.length'>
+                <img v-for='(src,index) of srcs' :src="service+src" :key='index'/>
+            </div>
 
-    </form>
+            <div class="add" @tap='chooseImg'>
+                <span class="iconfont add-icon">&#xe692;</span>
+            </div>
+        </div>
+
+        <div class="tel">
+            <span class="iconfont tel-icon">&#xe771;</span>
+            <input v-model='tel' placeholder="请输入您的电话号码" style='display: inline-block;' >
+        </div>
+
+        <div class="btn-submit">
+            <button class="btn-submit" type='primary' @tap='formSubmit'>立即发布</button>
+        </div>
+    </div>
 </div>
 
 </template>
 
 <script>
 import Config from '@/utils/config'
+import {getSrcs,uploadImg,post,switchTab,showModal} from '@/utils/util'
 
 export default {
     data: {
-        date: null,  // 日期
-        preDate: null,
-        endDate: null,
-        itemType: 0,   // 类型
-        imgTempPath: null,  // 图片
+        user: null,
+        got_type: false,
+        type: null,
+        des: '',
+        tel: '',
+        isChoosing: false,
+        imgs: [],
+        srcs: [],
         service: Config['service'],
-        user_id: null
+    },
+    // 处理选择图片触发onHide问题
+    onHide () {
+        if(!this.isChoosing) {
+            this.got_type = false
+            this.imgs = []
+            this.srcs = []
+            this.des = ''
+        } else {
+            this.isChoosing = false
+        }
     },
 
     beforeMount (options) {
-        this.user_id = wx.getStorageSync('userData').id || ''
-
-        if (this.user_id) {
-            console.log('use_id', this.user_id)
-        }
-
-        this.date = this.getNowDate()
-        this.preDate = this.getPreDate()
-        this.endDate = this.getNowDate()
-        console.log(this.date);
-        console.log(this.preDate);
+        this.got_type = false
+        this.user = wx.getStorageSync('userData') || null
+        this.tel = this.user.phoneNumber || ''
     },
 
     methods: {
-        checkData (postData) {
-            if(!postData.date || !postData.des || !postData.img || !postData.itemName || !postData.place) {
-                return false;
-            } else {
-                return true;
-            }
-        },
-        formSubmit (e) {
-
-            let postData = {};
-            postData.date = this.date;
-            postData.itemType = this.itemType;
-            postData.imgTempPath = this.imgTempPath;
-
-            postData.itemName = e.mp.detail.value.itemName;
-            postData.place = e.mp.detail.value.place;
-            postData.des = e.mp.detail.value.des;
-
-            console.log(postData);
-
-            if (postData.imgTempPath === null) {
-                wx.showToast({
-                    title: '所有字段不能为空',
-                    icon: 'none'
-                });
-                return ;
-            }
-
-            // 将图片上传到服务器
-            wx.uploadFile({
-                url: this.service + '/api/v1/item/upload_img',
-                filePath: postData.imgTempPath,
-                name: 'img',
-                success: res => {
-                    let data = JSON.parse(res.data);
-                    console.log(typeof(data));
-                    console.log('res.data', data)
-                    if (data.code === 1) {
-                        console.log('res.data', data)
-                        postData.img = data.userData.imgServerPath;
-                        console.log('postData', postData)
-                        if (this.checkData(postData) === false) {
-                            wx.showToast({
-                            title: '所有字段不能为空',
-                            icon: 'none'
-                            });
-                            return ;
-                        }
-                        // 将整个item post到服务器
-                        wx.request({
-                            url: this.service +  '/api/v1/item/' + this.user_id,
-                            method: 'POST',
-                            data: {
-                                postData: postData
-                            },
-                            success: res => {
-                            console.log(res);
-                            if (res.data.code === 1) {
-                                wx.showToast({
-                                title: '发布成功'
-                                });
-                                wx.reLaunch({
-                                url: '/pages/index/main'
-                                });
-                            } else {
-                                wx.showToast({
-                                title: '服务器发生错误',
-                                icon: 'none'
-                                });
-                            }
-                            }
-                        });
-                } else {
-                wx.showToast({
-                    title: '上传图片失败',
-                    icon: 'none'
-                });
-                }
-            }
+        async uploadImgs() {
+            console.log('in uploadImgs')
+            this.imgs.forEach(async (img) => {
+                let src = await uploadImg(img)
+                this.srcs.push(src)
             })
         },
-        uploadImg () {
+
+        onLostClick () {
+            this.got_type = true
+            this.type = 0
+        },
+
+        onFoundClick () {
+            this.got_type = true
+            this.type = 1
+        },
+
+        chooseImg () {
+            this.isChoosing = true
+            console.log('this.srcs', this.srcs)
+            if (this.srcs.length >=3 ) {
+                showModal('失败', '最多三张图片')
+                return
+            }
             wx.chooseImage({
-                count: 1,
+                count: 3,
                 sizeType: ['compressed'],
                 success: res => {
-                    console.log(res);
-                    console.log(res.tempFilePaths[0]);
-                    this.imgTempPath =res.tempFilePaths[0]
+                    this.imgs = []
+                    res.tempFilePaths.forEach((item)=> {
+                        this.imgs.push(item)
+                    })
+                    this.uploadImgs()
                 }
             });
         },
-        bindDateChange (e) {
-            this.date = e.mp.detail.value
-        },
-        radioChange (e) {
-            console.log('e', e);
-            this.itemType = e.mp.detail.value
-        }
 
+        async formSubmit (e) {
+            let data = {
+                type: this.type,
+                des: this.des,
+                tel: this.tel,
+                srcs: this.srcs.join('|')
+            }
+            console.log('postData', data)
+            await post(`/api/v1/item/${this.user.id}`, data)
+            await switchTab('/pages/index/main')
+        }
     }
 
 }
 </script>
 
 <style lang="css">
+
+#container {
+    padding:.2rem;
+}
+
+
+#des {
+    font-size: .8em;
+}
+
+textarea {
+    height: 250rpx;
+}
+
+.union {
+    display: flex;
+    flex-flow: row wrap;
+}
+
+.imgs img {
+    width: 1.3rem;
+    height: 1.3rem;
+    border-radius: 2rpx;
+    margin-right: 2rpx;
+}
+
+.btn-submit {
+    padding: 0 .1rem;
+    color: #fff;
+}
+
+.btn-submit button {
+    background-color: #2489cd;
+    border-radius: .05rem;
+    font-size: .85em;
+    height: .8rem;
+}
+
+.tel {
+    font-size: .8em;
+    color: #666;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    margin: .2rem 0;
+}
+
+.add {
+    width: 1.3rem;
+    height: 1.3rem;
+    border: 1.5rpx dashed #666;
+    border-radius: 2rpx;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.add-icon {
+    color: #666;
+    font-weight: lighter;
+    font-size: .8rem !important;
+}
+
+
+.get-type {
+    width: 100%;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lost {
+    margin-bottom: .5rem;
+}
+
 </style>
+
+
+<!-- // 将整个item post到服务器
+wx.request({
+    url: this.service +  '/api/v1/item/' + this.user_id,
+    method: 'POST',
+    data: {
+        postData: postData
+    },
+    success: res => {
+    console.log(res);
+    if (res.data.code === 1) {
+        wx.showToast({
+        title: '发布成功'
+        });
+        wx.reLaunch({
+        url: '/pages/index/main'
+        });
+    } else {
+        wx.showToast({
+        title: '服务器发生错误',
+        icon: 'none'
+        });
+    }
+    }
+}); -->
+
+
+<!-- <form @submit='formSubmit'>
+
+    <radio-group @change="radioChange">
+        <label><radio value='0' checked='checked' />失物</label>
+        <label><radio value='1' />招领</label>
+    </radio-group>
+
+    <label for='itemName' id='itemNameLabel'>
+        名称：
+        <input id='itemName' name='itemName' placeholder='输入物品名称'/>
+    </label>
+
+    <picker mode="date" @change='bindDateChange' :value="date" :start="preDate" :end="endDate">
+        <p v-if="itemType == 0"> 丢失时间：{{date}} </p>
+        <p v-else> 捡到时间：{{date}} </p>
+    </picker>
+
+    <label for='placeInput' id='placeLabel'>
+      <p>地点：</p>
+      <input id='placeInput' name='place' placeholder='输入地点' />
+    </label>
+
+    <button @tap='uploadImg' type='primary' :plain='true' size='mini'>上传图片</button>
+    <img v-if="imgTempPath" :src='imgTempPath' />
+
+    <div id="des">
+        描述：
+        <textarea placeholder='输入描述信息' name='des' ></textarea>
+    </div>
+
+    <button formType="submit" type='primary' size='mini'>提交</button>
+
+</form> -->
+
+
+<!-- beforeCreate () {
+    console.log('beforeCreate')
+},
+
+created () {
+    console.log('created')
+},
+
+mounted () {
+    console.log('mounted')
+},
+
+beforeUpdate () {
+    console.log('beforeUpdate')
+},
+
+updated () {
+    console.log('updated')
+},
+
+activated () {
+    console.log('activated')
+},
+
+deactivated () {
+    console.log('deactivated')
+},
+
+beforeDestroy () {
+    console.log('beforeDestroy')
+},
+
+destroyed () {
+    console.log('destroyed')
+},
+
+
+onLoad() {
+    console.log('onLoad', this)
+},
+onReady () {
+    console.log('onReady', this)
+},
+onShow() {
+    console.log('onShow', this)
+},
+onUnload() {
+    console.log('onUnload', this)
+},
+onHide() {
+    console.log('onHide', this)
+}, -->

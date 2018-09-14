@@ -2,11 +2,8 @@
   "pages": [
     "pages/index/main",
     "pages/logs/main",
-    "pages/counter/main",
     "pages/profile/main",
     "pages/post/main",
-    "pages/itemDetail/main",
-    "pages/changeContact/main",
     "pages/itemsControl/main",
     "pages/editItem/main"
   ],
@@ -21,20 +18,20 @@
       {
         "pagePath": "pages/index/main",
         "text": "物品",
-        "iconPath": "./static/imgs/items_default.png",
-        "selectedIconPath": "./static/imgs/items_selected.png"
+        "iconPath": "./static/imgs/item_0.png",
+        "selectedIconPath": "./static/imgs/item_1.png"
       },
       {
         "pagePath": "pages/post/main",
         "text": "发布",
-        "iconPath": "./static/imgs/post_default.png",
-        "selectedIconPath": "./static/imgs/post_selected.png"
+        "iconPath": "./static/imgs/post_0.png",
+        "selectedIconPath": "./static/imgs/post_1.png"
       },
       {
         "pagePath": "pages/profile/main",
         "text": "我的",
-        "iconPath": "./static/imgs/profile_default.png",
-        "selectedIconPath": "./static/imgs/profile_selected.png"
+        "iconPath": "./static/imgs/square-blue.png",
+        "selectedIconPath": "./static/imgs/me_1.png"
       }
     ],
     "color": "black",

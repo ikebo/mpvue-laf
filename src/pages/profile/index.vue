@@ -1,177 +1,151 @@
 <template lang="html">
-<div id='container'>
+<div id='container' :style="{height: height + 'px'}">
 
     <div id='userInfo'>
-        <div id='userInfo-left'>
-            <img :src='userInfo.avatarUrl' />
-            <p>{{userInfo.nickName}}</p>
+        <div v-show='userInfo' id='userInfo-left'>
+            <img :src='userInfo && userInfo.avatarUrl' />
+            <p v-show='userInfo'>{{userInfo && userInfo.nickName}}</p>
         </div>
 
         <div id='userInfo-right'>
-            <p>i</p>
-            <p>关于我们</p>
+            <p class="iconfont about-icon">&#xe760;</p>
+            <p class="about">关于</p>
         </div>
     </div>
 
-    <div id='profile'>
-    <div @tap='onTapContactControl' id='contact-control' class='profile-control'>
-        <p>联系方式</p>
-        <p>></p>
-    </div>
+    <div id="bottom-container">
+        <div class="item-control">
+            <p>
+                <span class="iconfont item-icon">&#xe79c;</span>
+                <span @tap='onClickPosts'>我的发布</span>
+            </p>
+        </div>
 
-    <div id='phoneNumber' class='contact-item'>
-        <p>手机号</p>
-        <p v-if='userInfo.userContact && userInfo.userContact.phoneNumber'>{{userInfo.userContact.phoneNumber}}</p>
-        <p v-else></p>
-    </div>
-
-    <div id='qqNumber' class='contact-item'>
-        <p>QQ</p>
-        <p v-if='userInfo.userContact && userInfo.userContact.qqNumber'>{{userInfo.userContact.qqNumber}}</p>
-        <p v-else></p>
-    </div>
-
-    <div id='weixinNumber' class='contact-item'>
-        <p>微信</p>
-        <p v-if='userInfo.userContact && userInfo.userContact.weixinNumber'>{{userInfo.userContact.weixinNumber}}</p>
-        <p v-else></p>
-    </div>
-
-    <div id='userPosts' @tap='onTapPostControl'>
-        <p>我的发布</p>
-        <p>></p>
+        <div class="setting">
+            <p>
+                <span class="iconfont setting-icon">&#xe79d;</span>
+                <span @tap='onClickAdvice'>反馈</span>
+            </p>
+        </div>
     </div>
     <button v-if="canUseInfo === false" open-type="getUserInfo" type='primary' @getuserinfo="onGotUserInfo">授权个人信息</button>
-    </div>
 
 </div>
 </template>
 
 <script>
-import Config from '@/utils/config'
+import {navigate,hasInfoAuth,post} from '@/utils/util'
 
 export default {
     data () {
         return {
-            userInfo: {},
+            userInfo: null,
+            user: null,
             canUseInfo: true,
-            service: Config['service']
+            height: 0
         }
     },
 
     methods: {
-        update_avatar: function() {
-            console.log('update_avatar')
+        async update_avatar () {
             // 将用户头像，用户名发送到服务器
-            wx.request({
-                url: this.service +  '/api/v1/user/avatar/' + this.userInfo.id,
-                method: 'POST',
-                data: {
-                    avatarUrl: this.userInfo.avatarUrl,
-                    nickName: this.userInfo.nickName
-                },
-                success: res => {
-                    console.log(res);
-                    let data = JSON.parse(res.data);
-                    console.log(data.userData);
-                    let userContact = JSON.parse(data.userData);
-
-                    this.userInfo['userContact'] = userContact;
-                    console.log('this.userInfo', this.userInfo);
-                }
-            });
+            let data = {
+                avatarUrl: this.userInfo.avatarUrl,
+                nickName: this.userInfo.nickName
+            }
+            await post(`/api/v1/user/avatar/${this.user.id}`, data)
         },
 
-        onTapContactControl: function() {
-            let query = 'phoneNumber=' + this.userInfo.userContact.phoneNumber + '&qqNumber=' + this.userInfo.userContact.qqNumber + '&weixinNumber=' + this.userInfo.userContact.weixinNumber;
-            console.log(query);
-            wx.navigateTo({
-                url: '/pages/changeContact/main?' + query
-            });
+        onClickPosts () {
+            navigate(`/pages/itemsControl/main?id=${this.user.id}`)
+        },
+
+        onClickAdvice () {
+            navigateTo(`/pages/advie/main?id=${this.user.id}`)
         },
 
         onTapPostControl: function() {
-            let user_id = this.userInfo['id'];
-            if (!user_id) {
-                wx.showToast({
-                    title: '获取用户信息失败',
-                    icon: 'none'
-                });
-            }
-            wx.request({
-                url: this.service +  '/api/v1/item/' + user_id,
-                method: 'GET',
-                success: res => {
-                    console.log(res);
-                    if(res.data.code !== 1) {
-                        wx.showToast({
-                            title: '服务器发生错误',
-                            icon: 'none'
-                        });
-                        return ;
-                    }
-                    // 缓存数据
-                    wx.setStorageSync('userItems', res.data.userData);
-                    wx.navigateTo({
-                        url: '/pages/itemsControl/main'
-                    });
-                }
-            });
+            let user_id = this.user.id;
         },
+
         onGotUserInfo: function (e) {
-            console.log('in onGotUserInfo')
-            let userInfo = e.mp.detail.userInfo
-            this.userInfo['avatarUrl'] = userInfo.avatarUrl;
-            this.userInfo['nickName'] = userInfo.nickName;
+            this.userInfo = e.mp.detail.userInfo
             this.canUseInfo = true
-            this.update_avatar();
-        }
+            this.update_avatar()
+        },
+
+        async isAuth () {
+            let infoOrFalse = await hasInfoAuth()
+            console.log('infoOrfalse', infoOrFalse)
+            this.userInfo = infoOrFalse ? infoOrFalse : this.userInfo
+            this.canUseInfo = Boolean(infoOrFalse) ? this.update_avatar() : ''
+        },
+
     },
 
     beforeMount (options) {
         // 获得全局数据：用户id
-        const userData = wx.getStorageSync('userData')
-        if (userData) {
-            console.log('获得缓存数据：userData', userData)
-            this.userInfo['id'] = userData.id
-        } else {
-            console.log('got userData failed')
-        }
+        const user = wx.getStorageSync('userData')
+        this.user = user
+        console.log('in profile, user', user)
+        this.isAuth()
 
-        wx.getSetting({
-            // 查看是否授权
+        wx.getSystemInfo({
             success: res => {
-                if(res.authSetting['scope.userInfo']) {
-                    // 已经授权， 可以直接调用getUserInfo获取头像昵称
-                    // 获取用户信息
-                    wx.getUserInfo({
-                        success: res => {
-                            console.log('in getUserInfo');
-                            this.userInfo['avatarUrl'] = res.userInfo.avatarUrl;
-                            this.userInfo['nickName'] = res.userInfo.nickName;
-
-                            console.log('this.userInfo', this.userInfo);
-
-                            this.update_avatar();
-
-                        }
-                    });
-                } else {
-                    console.log('未授权');
-                    this.canUseInfo = false
-                    wx.showToast({
-                        title: '请先点击按钮授权个人基本信息(昵称，头像)',
-                        icon: 'none'
-                    });
-                }
+                console.log(res.windowHeight)
+                this.height = res.windowHeight
             }
-        });
+        })
     }
 
 }
 </script>
 
 <style lang="css">
+
+#container {
+    background-color: #eee;
+}
+
+#bottom-container {
+    padding: .5em 0;
+}
+
+.item-control {
+    background-color: #fff;
+    font-size: .8em;
+    color: #2c2c2c;
+    padding: .5em 0;
+    padding-left: .5em;
+    font-weight: 400;
+}
+
+.setting {
+    background-color: #fff;
+    font-size: .8em;
+    color: #2c2c2c;
+    margin: .5em 0;
+    padding: .5em 0;
+    padding-left: .5em;
+    font-weight:400;
+}
+
+.item-icon, .setting-icon {
+    font-size: 1em;
+    color: #2c2c2c;
+    margin-right: .5em;
+    font-weight: bolder;
+}
+
+.about-icon {
+    font-size: .75em;
+    margin-right: 8rpx;
+}
+
+.about {
+    font-size: .9em;
+}
+
 #userInfo {
   display: flex;
   flex-flow: row nowrap;
@@ -180,33 +154,30 @@ export default {
   background-color: #2489cd;
   padding-bottom: 20rpx;
   color: #fff;
-  font-size: 0.8em;
+  font-size: 0.9em;
   position: relative;
 }
 
 #userInfo-left {
-  display: flex;
-  flex-flow: row nowrap;
-  align-items: center;
+    font-size: .9em;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
 }
 
 #userInfo-left img {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 50%;
-  margin-right: 20rpx;
+    width: 110rpx;
+    height: 110rpx;
+    border-radius: 50%;
+    margin-right: 20rpx;
 }
 
 #userInfo-right {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: flex-end;
-  margin-right: 20rpx;
-  align-items: center;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: flex-end;
+    padding-right: 20rpx;
+    align-items: center;
 }
 
-#userInfo-right img {
-  width: 30rpx;
-  height: 30rpx;
-}
 </style>
