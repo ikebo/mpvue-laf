@@ -1,4 +1,4 @@
-# mpvue-demo
+# mpvue-laf
 
 > A Mpvue project
 

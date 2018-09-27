@@ -1,7 +1,7 @@
 <template lang="html">
 <div class="item" v-if='hasDel === false'>
     <div class="header">
-        <img :src="user.avatarUrl ? user.avatarUrl : default_avatar" @click='onImgPreview(user.avatarUrl)'/>
+        <img :src="user.avatarUrl ? user.avatarUrl : default_avatar" @click='onImgPreview(user.avatarUrl ? user.avatarUrl : default_avatar)'/>
         <p class="header-middle">
             <span class="nickname">{{user.nickName ? user.nickName : '未知'}}</span>
             <span class="time">{{date_cname}} {{time}}</span>
