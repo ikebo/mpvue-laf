@@ -7,6 +7,24 @@ export function checkTel(tel){
     return true
 }
 
+export function dateSort(m, d) {
+    // m, d 为Number
+    let today = new Date();
+    let now_month = Number(today.getMonth() + 1);
+    let now_date = Number(today.getDate());
+    if (m !== now_month) {
+        return false
+    } else if (d === now_date) {
+        return '今天'
+    } else if (d === now_date - 1) {
+        return '昨天'
+    } else if (d === now_date - 2) {
+        return '前天'
+    } else {
+        return false
+    }
+}
+
 export function hasInfoAuth() {
     return new Promise((resolve, reject) => {
         wx.getSetting({
@@ -147,13 +165,21 @@ function request (url, method, data, header = {}) {
                     res.data.data === null ? resolve(true) : resolve(res.data.data)
                 } else {
                     console.log('post fail', res.data)
-                    showModal('失败', res.data.msg)
+                    showModal('失败', res.data.msg || '服务器异常')
                     resolve(false)
                 }
             },
             fail: function (res) {
-                console.log('fail')
-                showModal('失败', '服务器异常')
+                wx.getNetworkType({
+                    success: (r) => {
+                        if (r.networkType == "none") {
+                            showModal('失败','网络异常')
+                        } else {
+                            showModal('失败', '服务器异常')
+                        }
+                    }
+                })
+                resolve(false)
             }
         })
     })
@@ -169,6 +195,16 @@ export function delConfirm () {
             }
         })
     })
+}
+
+export function showLoading (title) {
+    wx.showLoading({
+        title
+    })
+}
+
+export function hideLoading () {
+    wx.hideLoading()
 }
 
 export function showModal (title, content) {

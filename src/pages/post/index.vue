@@ -40,7 +40,7 @@
 <script>
 import Config from '@/utils/config'
 import {getSrcs,uploadImg,post,switchTab,showModal,showMsg} from '@/utils/util'
-import {checkTel} from '@/utils/util'
+import {checkTel,showLoading,hideLoading,showSuccess} from '@/utils/util'
 
 export default {
     data: {
@@ -120,6 +120,7 @@ export default {
                 showMsg('请填写正确的手机号码')
                 return false
             }
+            showLoading('请稍后..')
             let data = {
                 type: this.type,
                 des: this.des,
@@ -127,8 +128,17 @@ export default {
                 srcs: this.srcs.join('|')
             }
             console.log('postData', data)
-            await post(`/api/v1/item/${this.user.id}`, data)
-            await switchTab('/pages/index/main')
+            let res = await post(`/api/v1/item/${this.user.id}`, data)
+            hideLoading()
+            console.log(res)
+            if (res) {
+                showSuccess('发布成功!')
+            } else {
+                showMsg('发布失败')
+            }
+            setTimeout(() =>{
+                switchTab('/pages/index/main')
+            },500)
         }
     }
 

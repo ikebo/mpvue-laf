@@ -1,10 +1,10 @@
 <template lang="html">
 <div class="item" v-if='hasDel === false'>
     <div class="header">
-        <img :src="user.avatarUrl" />
+        <img :src="user.avatarUrl ? user.avatarUrl : default_avatar" @click='onImgPreview(user.avatarUrl)'/>
         <p class="header-middle">
-            <span class="nickname">{{user.nickName}}</span>
-            <span class="time">{{month}}月{{day}}日</span>
+            <span class="nickname">{{user.nickName ? user.nickName : '未知'}}</span>
+            <span class="time">{{date_cname}} {{time}}</span>
         </p>
         <div class="header-right">
             <button v-if='!isControl' @click='bindContact' type="warn" size='mini' :plain='true'>联系Ta</button>
@@ -19,7 +19,7 @@
             <span class="des">{{item.des}}</span>
         </p>
         <div class="display">
-            <img :src="src" v-for='(src, index) of srcs' :key='index'  />
+            <img :src="src" @click='onImgPreview(srcs,index)' v-for='(src, index) of srcs' :key='index'  />
         </div>
     </div>
 </div>
@@ -27,7 +27,8 @@
 </template>
 
 <script>
-import {getSrcs,delConfirm,del} from '@/utils/util'
+import {getSrcs,delConfirm,del,dateSort} from '@/utils/util'
+import {DEFAULT_AVATAR} from '@/utils/config'
 
 export default {
     props: ['item', 'isControl'],
@@ -35,20 +36,33 @@ export default {
         return {
             user: this.item.user,
             srcs: getSrcs(this.item.srcs),
-            hasDel: false
+            hasDel: false,
+            default_avatar: DEFAULT_AVATAR
         }
     },
     computed: {
-        month () {
+        date_cname() {
             let arr = this.item.time.split('-')
-            return Number(arr[0])
+            let month = Number(arr[0])
+            let date = Number(arr[1])
+            let sort = dateSort(month, date)
+            return sort ? sort : `${month}月${date}日`
         },
-        day() {
+
+        time() {
             let arr = this.item.time.split('-')
-            return Number(arr[1])
+            return arr[2] + ':' + arr[3]
         }
     },
     methods: {
+        onImgPreview (src, index=0) {
+            console.log(src);
+            let urls = (typeof(src) === 'object') ? src : [src]
+            wx.previewImage({
+                urls,
+                current: urls[index]
+            })
+        },
         bindContact () {
             wx.makePhoneCall({
               phoneNumber: this.user.phoneNumber

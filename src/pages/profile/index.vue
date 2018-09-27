@@ -2,20 +2,27 @@
 <div id='container' :style="{height: height + 'px'}">
 
     <div id='userInfo'>
-        <div v-show='userInfo' class='userInfo-left'>
-            <img :src='userInfo && userInfo.avatarUrl' />
-            <p v-show='userInfo'>{{userInfo && userInfo.nickName}}</p>
+        <div v-show='userInfo && canUseInfo' class='userInfo-left'>
+            <img :src='userInfo && userInfo.avatarUrl' @click='onImgPreview(userInfo.avatarUrl)'/>
+            <p v-show='userInfo && canUseInfo'>{{userInfo && userInfo.nickName}}</p>
         </div>
 
         <div v-if='canUseInfo===false' class="userInfo-left">
             <button size='mini' id='authBtn' v-if="canUseInfo === false" open-type="getUserInfo" type='primary' :plain='true' @getuserinfo="onGotUserInfo" class="iconfont">
-                <p>&#xe97b;</p>
+                <!-- <p class="iconfont">Click</p> -->
+                <!-- <p>&#xe70f;</p> -->
+                <p>&#xe652;</p>
             </button>
         </div>
 
         <div id='userInfo-right'>
-            <p class="iconfont about-icon">&#xe760;</p>
-            <p class="about">关于</p>
+            <p>
+                <button @click='onAuthClick' type="primary" size='mini' :plain='true'><span>.未认证</span></button>
+            </p>
+            <p>
+                <span class="iconfont about-icon">&#xe760;</span>
+                <span class="about" @click='onAboutClick'>关于</span>
+            </p>
         </div>
     </div>
 
@@ -29,18 +36,16 @@
 
         <div class="setting">
             <p>
-                <span class="iconfont setting-icon">&#xe79d;</span>
+                <span class="iconfont setting-icon">&#xe6a1;</span>
                 <span @tap='onClickAdvice'>反馈</span>
             </p>
         </div>
     </div>
-
-
 </div>
 </template>
 
 <script>
-import {navigate,hasInfoAuth,post} from '@/utils/util'
+import {showModal,navigate,hasInfoAuth,post} from '@/utils/util'
 
 export default {
     data () {
@@ -53,6 +58,11 @@ export default {
     },
 
     methods: {
+        onImgPreview (src) {
+            wx.previewImage({
+                urls: [src]
+            })
+        },
         async update_avatar () {
             // 将用户头像，用户名发送到服务器
             let data = {
@@ -67,7 +77,7 @@ export default {
         },
 
         onClickAdvice () {
-            navigateTo(`/pages/advie/main?id=${this.user.id}`)
+            navigate(`/pages/advice/main?id=${this.user.id}`)
         },
 
         onTapPostControl: function() {
@@ -75,9 +85,12 @@ export default {
         },
 
         onGotUserInfo: function (e) {
-            this.userInfo = e.mp.detail.userInfo
-            this.canUseInfo = true
-            this.update_avatar()
+            if(e.mp.detail.userInfo) {
+                this.userInfo = e.mp.detail.userInfo
+                this.canUseInfo = true
+                this.update_avatar()
+            }
+            console.log('userinfo', e.mp.detail)
         },
 
         async isAuth () {
@@ -88,6 +101,28 @@ export default {
             console.log('this.canUseInfo', this.canUseInfo)
         },
 
+        onAboutClick () {
+            wx.showModal({
+                title: '关于',
+                content: '"武院失物招领"是由武院信息中心网技团开发的公益项目,开源地址:"https://github.com/ikebo/small-laf",联系邮箱:"k_1043@126.com"',
+                confirmText: 'OK',
+                confirmColor: '#2489cd',
+                showCancel: false
+            })
+        },
+
+        onAuthClick () {
+            navigate(`/pages/auth/main?id=${this.user.id}`)
+        }
+    },
+
+    created() {
+        wx.getSystemInfo({
+            success: res => {
+                console.log(res.windowHeight)
+                this.height = res.windowHeight
+            }
+        })
     },
 
     beforeMount (options) {
@@ -96,13 +131,6 @@ export default {
         this.user = user
         console.log('in profile, user', user)
         this.isAuth()
-
-        wx.getSystemInfo({
-            success: res => {
-                console.log(res.windowHeight)
-                this.height = res.windowHeight
-            }
-        })
     }
 
 }
@@ -120,7 +148,7 @@ export default {
 
 .item-control {
     background-color: #fff;
-    font-size: .8em;
+    font-size: .9em;
     color: #2c2c2c;
     padding: .5em 0;
     padding-left: .5em;
@@ -129,7 +157,7 @@ export default {
 
 .setting {
     background-color: #fff;
-    font-size: .8em;
+    font-size: .9em;
     color: #2c2c2c;
     margin: .5em 0;
     padding: .5em 0;
@@ -145,7 +173,7 @@ export default {
 }
 
 .about-icon {
-    font-size: .75em;
+    font-size: .8em;
     margin-right: 8rpx;
 }
 
@@ -198,6 +226,20 @@ export default {
     border-radius: 50%;
     color: #999;
     border-color: #999;
+}
+
+#userInfo-right button {
+    width: 4em;
+    height: 2em;
+    font-size: .8em;
+    padding: 0 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 2rpx;
+    color: #fff;
+    border-color: #fff;
+    margin-right: 1em;
 }
 
 </style>

@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import {get} from '@/utils/util'
+import {get,showLoading,hideLoading} from '@/utils/util'
 import Item from '@/components/Item'
 
 export default {
@@ -32,6 +32,7 @@ export default {
         async getItems() {
             let items = await get(`/api/v1/item/${this.user_id}`)
             this.items = items
+            hideLoading()
             wx.stopPullDownRefresh()
             console.log('this.items', this.items)
         }
@@ -39,6 +40,7 @@ export default {
 
     // mounted 之后才能调用methods中的方法
     mounted () {
+        showLoading('请稍后')
         console.log('itemsControl', this.$root.$mp.query)
         this.user_id = Number(this.$root.$mp.query.id)
         this.getItems()
