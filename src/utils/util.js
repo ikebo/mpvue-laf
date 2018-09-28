@@ -98,7 +98,7 @@ export function getSrcs(srcs) {
             arr = srcs.split('|')
         }
         arr.forEach((src) => {
-            res.push(Config['service'] + src)
+            res.push(Config['static_service'] + src)
         })
     }
     return res
